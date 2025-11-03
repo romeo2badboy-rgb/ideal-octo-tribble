@@ -1,0 +1,23 @@
+{
+  "wave_right": {
+    "gestures": [
+      {"t": 0.0, "bone": "RightArm", "action": "rotate", "axis": "z", "dir": "left",  "amplitude": 0.6, "dur": 0.8},
+      {"t": 0.8, "bone": "RightArm", "action": "rotate", "axis": "z", "dir": "right", "amplitude": 0.6, "dur": 0.8}
+    ],
+    "duration_hint": 1.6
+  },
+  "look_left": {
+    "gestures": [
+      {"t": 0.0, "bone": "Head", "action": "rotate", "axis": "y", "dir": "left", "amplitude": 0.4, "dur": 0.5},
+      {"t": 0.5, "bone": "Head", "action": "rotate", "axis": "y", "dir": "center", "amplitude": 0.4, "dur": 0.4}
+    ],
+    "duration_hint": 1.0
+  },
+  "lean_forward": {
+    "gestures": [
+      {"t": 0.0, "bone": "Spine", "action": "rotate", "axis": "x", "dir": "forward", "amplitude": 0.3, "dur": 0.8},
+      {"t": 0.8, "bone": "Spine", "action": "rotate", "axis": "x", "dir": "center",  "amplitude": 0.3, "dur": 0.8}
+    ],
+    "duration_hint": 1.6
+  }
+}
