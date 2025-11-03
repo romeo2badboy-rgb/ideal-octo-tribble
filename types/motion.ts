@@ -13,7 +13,7 @@ export const BoneEnum = z.enum([
   'Hips',
 ]);
 
-export const ActionEnum = z.enum(['rotate', 'move', 'idle', 'reset']);
+export const ActionEnum = z.enum(['rotate', 'move', 'idle', 'reset', 'hold']);
 
 export const AxisEnum = z.enum(['x', 'y', 'z']);
 
@@ -38,6 +38,7 @@ export const GestureSchema = z.object({
   amplitude: z.number().min(0).max(1).default(0.3).describe('Intensity 0-1'),
   dir: DirectionEnum.default('forward'),
   ease: EaseEnum.default('inout'),
+  note: z.string().optional().describe('Optional debug note'),
 });
 
 export const MotionDSLSchema = z.object({
