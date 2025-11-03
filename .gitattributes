@@ -1,0 +1,2 @@
+# VRM model files (use Git LFS for large files)
+*.vrm filter=lfs diff=lfs merge=lfs -text
