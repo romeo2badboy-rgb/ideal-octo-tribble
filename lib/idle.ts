@@ -20,10 +20,10 @@ export function enableIdle() {
     return false;
   }
 
-  // Get bone nodes
-  const spine = vrm.humanoid.getBoneNode('spine');
-  const chest = vrm.humanoid.getBoneNode('chest');
-  const neck = vrm.humanoid.getBoneNode('neck');
+  // Get bone nodes (using getNormalizedBoneNode for VRM 2.x)
+  const spine = vrm.humanoid.getNormalizedBoneNode('spine');
+  const chest = vrm.humanoid.getNormalizedBoneNode('chest');
+  const neck = vrm.humanoid.getNormalizedBoneNode('neck');
 
   console.log('[Idle] Bones found:', {
     spine: !!spine,

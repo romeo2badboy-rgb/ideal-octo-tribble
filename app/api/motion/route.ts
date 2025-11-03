@@ -370,22 +370,25 @@ export async function POST(request: NextRequest) {
     // Initialize Gemini 2.5 Flash with advanced system prompt
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash-latest', // Using Gemini 2.5 Flash (latest stable)
+      model: 'gemini-2.5-flash', // Using Gemini 2.5 Flash stable
       systemInstruction: MASTER_SYSTEM_PROMPT,
       generationConfig: {
         temperature: 0.85, // Higher creativity for emotional nuance and variations
         topP: 0.95,         // Nucleus sampling for diverse yet coherent motion
         topK: 50,           // Increased for more motion variety
         maxOutputTokens: 2048, // Support complex multi-gesture plans
+        responseMimeType: 'application/json', // Ensure JSON output
       },
     });
 
     // Generate motion using Gemini
+    console.log('[Motion API] Calling Gemini with model: gemini-2.5-flash');
     const result = await model.generateContent(command);
     const response = await result.response;
     let motionText = response.text().trim();
 
-    console.log('[Motion API] Raw AI response:', motionText.substring(0, 200));
+    console.log('[Motion API] ✓ Received response, length:', motionText.length);
+    console.log('[Motion API] Raw AI response (first 300 chars):', motionText.substring(0, 300));
 
     // Remove markdown code blocks if present
     if (motionText.includes('```')) {
@@ -421,11 +424,25 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(validatedMotion);
   } catch (error) {
-    console.error('[Motion API] Error generating motion:', error);
+    console.error('[Motion API] ❌ Error generating motion:', error);
+
+    // Log detailed error info
+    if (error instanceof Error) {
+      console.error('[Motion API] Error name:', error.name);
+      console.error('[Motion API] Error message:', error.message);
+      console.error('[Motion API] Error stack:', error.stack);
+    }
+
+    // Check if it's a Gemini API error
+    if (typeof error === 'object' && error !== null) {
+      console.error('[Motion API] Error object:', JSON.stringify(error, null, 2));
+    }
+
     return NextResponse.json(
       {
         error: 'Failed to generate motion',
         details: error instanceof Error ? error.message : 'Unknown error',
+        type: error instanceof Error ? error.name : typeof error,
       },
       { status: 500 }
     );

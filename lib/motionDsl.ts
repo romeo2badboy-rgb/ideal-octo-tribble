@@ -12,7 +12,7 @@ function setBoneRot(
   rad: number
 ): boolean {
   try {
-    const node = vrm?.humanoid?.getBoneNode(boneName);
+    const node = vrm?.humanoid?.getNormalizedBoneNode(boneName);
 
     if (!node) {
       console.warn(`[Motion DSL] Bone "${boneName}" not found`);
@@ -173,7 +173,7 @@ export function resetAllBones() {
     const boneNames = Object.keys(vrm.humanoid.humanBones || {});
 
     for (const boneName of boneNames) {
-      const bone = vrm.humanoid.getBoneNode(boneName);
+      const bone = vrm.humanoid.getNormalizedBoneNode(boneName);
       if (bone) {
         bone.rotation.set(0, 0, 0);
       }
