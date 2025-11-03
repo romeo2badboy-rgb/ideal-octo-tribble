@@ -110,7 +110,7 @@ export class MotionEngine {
     const vrmBoneName = boneMapping[boneName];
     if (!vrmBoneName) return null;
 
-    const boneNode = humanoid.humanBones[vrmBoneName];
+    const boneNode = humanoid.humanBones[vrmBoneName as keyof typeof humanoid.humanBones];
     return boneNode?.node || null;
   }
 
