@@ -1,93 +1,185 @@
 import * as THREE from 'three';
 
-const LIM = THREE.MathUtils.degToRad(45);
+const LIM = THREE.MathUtils.degToRad(45); // ±45° safety limit
 
+/**
+ * Set bone rotation with safety clamping
+ */
 function setBoneRot(
   vrm: any,
   boneName: string,
   axis: 'x' | 'y' | 'z',
   rad: number
-) {
-  const node = vrm?.humanoid?.getBoneNode(boneName);
-  if (!node) {
-    console.warn(`Bone "${boneName}" not found in VRM humanoid`);
-    return;
+): boolean {
+  try {
+    const node = vrm?.humanoid?.getBoneNode(boneName);
+
+    if (!node) {
+      console.warn(`[Motion DSL] Bone "${boneName}" not found`);
+      return false;
+    }
+
+    // Clamp to safety limits
+    const r = THREE.MathUtils.clamp(rad, -LIM, LIM);
+
+    // Apply rotation
+    if (axis === 'x') node.rotation.x = r;
+    if (axis === 'y') node.rotation.y = r;
+    if (axis === 'z') node.rotation.z = r;
+
+    return true;
+  } catch (e) {
+    console.error(`[Motion DSL] Error setting bone "${boneName}":`, e);
+    return false;
   }
-  const r = THREE.MathUtils.clamp(rad, -LIM, LIM);
-  if (axis === 'x') node.rotation.x = r;
-  if (axis === 'y') node.rotation.y = r;
-  if (axis === 'z') node.rotation.z = r;
 }
 
-// Motion DSL plan: { gestures:[{t, bone, action:'rotate'|'reset', axis, dir, amplitude, dur}], duration_hint }
-export function applyMotionDSL(plan: any) {
+/**
+ * Bone name mapping (our DSL names → VRM humanoid bone names)
+ */
+const BONE_MAP: Record<string, string> = {
+  Head: 'Head',
+  Neck: 'Neck',
+  Spine: 'Spine',
+  Chest: 'Chest',
+  LeftArm: 'LeftUpperArm',
+  RightArm: 'RightUpperArm',
+  LeftLeg: 'LeftUpperLeg',
+  RightLeg: 'RightUpperLeg',
+  Hips: 'Hips',
+};
+
+/**
+ * Apply Motion DSL plan to VRM avatar
+ *
+ * Plan format:
+ * {
+ *   gestures: [{
+ *     t: number,           // start time (seconds)
+ *     dur: number,         // duration (seconds)
+ *     bone: string,        // bone name (Head, RightArm, etc.)
+ *     action: 'rotate'|'reset',
+ *     axis: 'x'|'y'|'z',
+ *     dir: 'left'|'right'|'up'|'down'|'forward'|'back'|'center',
+ *     amplitude: number    // 0-1 (multiplied by safety limit)
+ *   }],
+ *   duration_hint: number  // total duration
+ * }
+ */
+export function applyMotionDSL(plan: any): boolean {
   const vrm = (window as any).vrm;
+
   if (!vrm) {
-    console.warn('No VRM loaded');
-    return;
+    console.error('[Motion DSL] Cannot apply: VRM not loaded');
+    return false;
+  }
+
+  if (!vrm.humanoid) {
+    console.error('[Motion DSL] Cannot apply: VRM has no humanoid');
+    return false;
+  }
+
+  if (!plan || !Array.isArray(plan.gestures)) {
+    console.error('[Motion DSL] Invalid plan format');
+    return false;
   }
 
   const start = performance.now() / 1000;
-  const gestures = plan?.gestures || [];
+  const gestures = plan.gestures;
 
-  console.log('MotionDSL applied with', gestures.length, 'gestures');
+  console.log(`[Motion DSL] ✓ Applying plan with ${gestures.length} gestures`);
 
+  // Create motion update function
   (window as any).__motionUpdate = (dt: number) => {
-    const now = performance.now() / 1000 - start;
+    try {
+      const now = performance.now() / 1000 - start;
 
-    for (const g of gestures) {
-      const {
-        t = 0,
-        dur = 0.6,
-        bone,
-        action = 'rotate',
-        axis = 'y',
-        dir = 'left',
-        amplitude = 0.3,
-      } = g;
+      for (const g of gestures) {
+        if (!g) continue;
 
-      if (now < t || now > t + dur) continue;
+        const {
+          t = 0,
+          dur = 0.6,
+          bone,
+          action = 'rotate',
+          axis = 'y',
+          dir = 'left',
+          amplitude = 0.3,
+        } = g;
 
-      const k = (now - t) / dur;
-      const ease = 0.5 - 0.5 * Math.cos(Math.PI * Math.min(1, Math.max(0, k)));
+        // Check if gesture is active
+        if (now < t || now > t + dur) continue;
 
-      const sign =
-        dir === 'left' || dir === 'up' || dir === 'forward'
-          ? 1
-          : dir === 'center'
-          ? 0
-          : -1;
+        // Calculate progress (0-1)
+        const k = (now - t) / dur;
 
-      const rad = sign * amplitude * LIM * ease;
+        // Apply easing (smooth cosine)
+        const ease = 0.5 - 0.5 * Math.cos(Math.PI * Math.min(1, Math.max(0, k)));
 
-      // Map bone names to VRM humanoid bones
-      const map: any = {
-        Head: 'Head',
-        Neck: 'Neck',
-        Spine: 'Spine',
-        Chest: 'Chest',
-        LeftArm: 'LeftUpperArm',
-        RightArm: 'RightUpperArm',
-        LeftLeg: 'LeftUpperLeg',
-        RightLeg: 'RightUpperLeg',
-        Hips: 'Hips',
-      };
+        // Direction multiplier
+        let sign = 0;
+        if (dir === 'left' || dir === 'up' || dir === 'forward') sign = 1;
+        else if (dir === 'right' || dir === 'down' || dir === 'back') sign = -1;
+        else if (dir === 'center') sign = 0;
 
-      const target = map[bone] || bone;
+        // Calculate rotation
+        const rad = sign * amplitude * LIM * ease;
 
-      if (action === 'rotate') setBoneRot(vrm, target, axis, rad);
-      if (action === 'reset') setBoneRot(vrm, target, axis, 0);
-    }
+        // Map bone name
+        const target = BONE_MAP[bone] || bone;
 
-    // Stop motion update after duration
-    if (now > (plan.duration_hint || 2.0)) {
-      console.log('MotionDSL complete');
-      (window as any).__motionUpdate = null;
+        // Apply action
+        if (action === 'rotate') {
+          setBoneRot(vrm, target, axis as any, rad);
+        } else if (action === 'reset') {
+          setBoneRot(vrm, target, axis as any, 0);
+        }
+      }
+
+      // Auto-stop when motion is complete
+      if (now > (plan.duration_hint || 2.0)) {
+        console.log('[Motion DSL] ✓ Motion complete');
+        stopMotion();
+      }
+    } catch (e) {
+      console.error('[Motion DSL] Error during motion update:', e);
     }
   };
+
+  return true;
 }
 
+/**
+ * Stop current motion
+ */
 export function stopMotion() {
   (window as any).__motionUpdate = null;
-  console.log('Motion stopped');
+  console.log('[Motion DSL] ✓ Motion stopped');
+}
+
+/**
+ * Reset all bones to neutral pose
+ */
+export function resetAllBones() {
+  const vrm = (window as any).vrm;
+
+  if (!vrm || !vrm.humanoid) {
+    console.warn('[Motion DSL] Cannot reset: No VRM');
+    return;
+  }
+
+  try {
+    const boneNames = Object.keys(vrm.humanoid.humanBones || {});
+
+    for (const boneName of boneNames) {
+      const bone = vrm.humanoid.getBoneNode(boneName);
+      if (bone) {
+        bone.rotation.set(0, 0, 0);
+      }
+    }
+
+    console.log('[Motion DSL] ✓ All bones reset to neutral');
+  } catch (e) {
+    console.error('[Motion DSL] Error resetting bones:', e);
+  }
 }
