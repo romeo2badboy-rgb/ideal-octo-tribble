@@ -21,9 +21,9 @@ export function enableIdle() {
   }
 
   // Get bone nodes
-  const spine = vrm.humanoid.getBoneNode('Spine');
-  const chest = vrm.humanoid.getBoneNode('Chest');
-  const neck = vrm.humanoid.getBoneNode('Neck');
+  const spine = vrm.humanoid.getBoneNode('spine');
+  const chest = vrm.humanoid.getBoneNode('chest');
+  const neck = vrm.humanoid.getBoneNode('neck');
 
   console.log('[Idle] Bones found:', {
     spine: !!spine,

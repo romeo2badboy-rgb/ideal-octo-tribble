@@ -36,17 +36,18 @@ function setBoneRot(
 
 /**
  * Bone name mapping (our DSL names → VRM humanoid bone names)
+ * VRM 0.x uses lowercase bone names
  */
 const BONE_MAP: Record<string, string> = {
-  Head: 'Head',
-  Neck: 'Neck',
-  Spine: 'Spine',
-  Chest: 'Chest',
-  LeftArm: 'LeftUpperArm',
-  RightArm: 'RightUpperArm',
-  LeftLeg: 'LeftUpperLeg',
-  RightLeg: 'RightUpperLeg',
-  Hips: 'Hips',
+  Head: 'head',
+  Neck: 'neck',
+  Spine: 'spine',
+  Chest: 'chest',
+  LeftArm: 'leftUpperArm',
+  RightArm: 'rightUpperArm',
+  LeftLeg: 'leftUpperLeg',
+  RightLeg: 'rightUpperLeg',
+  Hips: 'hips',
 };
 
 /**

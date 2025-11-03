@@ -114,7 +114,7 @@ export default function VRMViewer({ modelPath }: VRMViewerProps) {
         // ========== SANITY TEST: ROTATE HEAD ==========
         setTimeout(() => {
           console.log('[Init] Running sanity test...');
-          const head = vrm?.humanoid?.getBoneNode('Head');
+          const head = vrm?.humanoid?.getBoneNode('head');
           if (head) {
             head.rotation.y += 0.2;
             console.log('[Init] ✓ Head rotation test successful');
