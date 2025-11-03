@@ -34,10 +34,10 @@ See `/public/models/README.md` for details.
 Create a `.env.local` file:
 
 ```bash
-ANTHROPIC_API_KEY=your_api_key_here
+GEMINI_API_KEY=your_api_key_here
 ```
 
-Get your API key from: https://console.anthropic.com/
+Get your API key from: https://aistudio.google.com/app/apikey
 
 ### 4. Run Development Server
 
@@ -146,7 +146,7 @@ The system uses a JSON-based DSL for describing motions:
    ```
 
 3. Set environment variables in Vercel dashboard:
-   - `ANTHROPIC_API_KEY`
+   - `GEMINI_API_KEY`
 
 4. Upload VRM model to `/public/models/` before deploying, or use Vercel Blob storage for larger files.
 
@@ -198,7 +198,7 @@ export const SAFETY_CONSTRAINTS = {
 
 ### AI Not Responding
 
-- Verify `ANTHROPIC_API_KEY` is set
+- Verify `GEMINI_API_KEY` is set
 - Check API quota/limits
 - Review browser network tab for errors
 
@@ -216,4 +216,4 @@ MIT
 
 - VRM Format: [VRM Consortium](https://vrm.dev/)
 - Three.js VRM: [@pixiv/three-vrm](https://github.com/pixiv/three-vrm)
-- AI: [Anthropic Claude](https://www.anthropic.com/)
+- AI: [Google Gemini](https://ai.google.dev/)

@@ -7,7 +7,7 @@ This project is optimized for deployment on Vercel.
 ### Prerequisites
 
 1. A Vercel account (https://vercel.com)
-2. An Anthropic API key (https://console.anthropic.com/)
+2. A Google Gemini API key (https://aistudio.google.com/app/apikey)
 3. A VRM model file (e.g., AliciaSolid.vrm)
 
 ### Step-by-Step Deployment
@@ -55,7 +55,7 @@ git push
    - Build Command: `npm run build`
    - Output Directory: `.next`
 4. Add environment variable:
-   - Name: `ANTHROPIC_API_KEY`
+   - Name: `GEMINI_API_KEY`
    - Value: `your_api_key_here`
 5. Click "Deploy"
 
@@ -72,7 +72,7 @@ vercel login
 vercel
 
 # Follow prompts and set environment variables
-vercel env add ANTHROPIC_API_KEY
+vercel env add GEMINI_API_KEY
 ```
 
 #### 4. Configure Environment Variables
@@ -81,7 +81,7 @@ In Vercel Dashboard → Settings → Environment Variables:
 
 | Variable | Value | Environment |
 |----------|-------|-------------|
-| `ANTHROPIC_API_KEY` | Your API key | Production, Preview, Development |
+| `GEMINI_API_KEY` | Your API key | Production, Preview, Development |
 
 #### 5. Verify Deployment
 
@@ -135,7 +135,7 @@ module.exports = {
 #### 3. Monitor Performance
 
 - Use Vercel Analytics
-- Monitor API usage (Anthropic dashboard)
+- Monitor API usage (Google AI Studio dashboard)
 - Check Core Web Vitals
 - Test on various devices
 
@@ -160,9 +160,9 @@ Error: AI service not configured
 ```
 
 **Solutions:**
-- Verify `ANTHROPIC_API_KEY` is set
+- Verify `GEMINI_API_KEY` is set
 - Check API key is valid
-- Review Anthropic API quota
+- Review Google AI Studio API quota
 - Check Vercel function logs
 
 #### Build Failures
@@ -249,7 +249,7 @@ CMD ["npm", "start"]
 
 ```bash
 docker build -t daxon-vrm .
-docker run -p 3000:3000 -e ANTHROPIC_API_KEY=your_key daxon-vrm
+docker run -p 3000:3000 -e GEMINI_API_KEY=your_key daxon-vrm
 ```
 
 ### Security Best Practices
@@ -296,5 +296,5 @@ vercel promote <deployment-url>
 
 For issues:
 - Check Vercel docs: https://vercel.com/docs
-- Review Anthropic API docs: https://docs.anthropic.com/
+- Review Google AI docs: https://ai.google.dev/docs
 - Open GitHub issue in this repo

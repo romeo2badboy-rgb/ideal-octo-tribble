@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { MotionDSLSchema } from '@/types/motion';
 
 const SYSTEM_PROMPT = `You are a motion generation AI for VRM avatars. Your task is to convert text commands into Motion DSL JSON.
@@ -56,43 +56,42 @@ export async function POST(request: NextRequest) {
     }
 
     // Check for API key
-    const apiKey = process.env.ANTHROPIC_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      console.error('ANTHROPIC_API_KEY not set');
+      console.error('GEMINI_API_KEY not set');
       return NextResponse.json(
         { error: 'AI service not configured' },
         { status: 500 }
       );
     }
 
-    const client = new Anthropic({ apiKey });
-
-    // Generate motion using Claude
-    const message = await client.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
-      max_tokens: 1024,
-      messages: [
-        {
-          role: 'user',
-          content: command,
-        },
-      ],
-      system: SYSTEM_PROMPT,
+    // Initialize Gemini AI
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.0-flash-exp',
+      systemInstruction: SYSTEM_PROMPT,
     });
 
-    const response = message.content[0];
-    if (response.type !== 'text') {
-      throw new Error('Unexpected response type');
+    // Generate motion using Gemini
+    const result = await model.generateContent(command);
+    const response = await result.response;
+    const motionText = response.text().trim();
+
+    // Remove markdown code blocks if present
+    let cleanedText = motionText;
+    if (motionText.includes('```')) {
+      cleanedText = motionText
+        .replace(/```json\n?/g, '')
+        .replace(/```\n?/g, '')
+        .trim();
     }
 
     // Parse and validate the motion DSL
-    const motionText = response.text.trim();
     let motionData;
-
     try {
-      motionData = JSON.parse(motionText);
+      motionData = JSON.parse(cleanedText);
     } catch (e) {
-      console.error('Failed to parse AI response as JSON:', motionText);
+      console.error('Failed to parse AI response as JSON:', cleanedText);
       throw new Error('AI returned invalid JSON');
     }
 
