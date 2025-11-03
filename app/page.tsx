@@ -35,6 +35,8 @@ export default function Home() {
     setIsProcessing(true);
     setError(null);
 
+    console.log('Submitting command:', command.trim());
+
     try {
       const response = await fetch('/api/motion', {
         method: 'POST',
@@ -50,15 +52,20 @@ export default function Home() {
       }
 
       const motion: MotionDSL = await response.json();
+      console.log('Received motion from API:', motion);
       setLastMotion(motion);
 
       // Play motion via window object (set by VRMViewer)
       if ((window as any).playMotion) {
+        console.log('Calling window.playMotion with motion data');
         (window as any).playMotion(motion);
+      } else {
+        console.error('window.playMotion is not available!');
       }
 
       setCommand('');
     } catch (err) {
+      console.error('Error in handleSubmit:', err);
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setIsProcessing(false);

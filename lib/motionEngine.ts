@@ -23,9 +23,16 @@ export class MotionEngine {
   }
 
   playMotion(motion: MotionDSL) {
+    console.log('MotionEngine: Starting motion with', motion.gestures.length, 'gestures');
     this.currentMotion = motion;
     this.startTime = performance.now() / 1000;
     this.isPlaying = true;
+
+    // Cancel any existing animation
+    if (this.animationFrameId !== null) {
+      cancelAnimationFrame(this.animationFrameId);
+    }
+
     this.animate();
   }
 
@@ -52,6 +59,7 @@ export class MotionEngine {
     if (!this.vrm || !this.currentMotion) return;
 
     const gestures = this.currentMotion.gestures;
+    let anyActive = false;
 
     for (const gesture of gestures) {
       const gestureEndTime = gesture.t + gesture.dur;
@@ -62,7 +70,14 @@ export class MotionEngine {
         const easedProgress = this.applyEasing(progress, gesture.ease);
 
         this.applyGesture(gesture, easedProgress);
+        anyActive = true;
       }
+    }
+
+    // Stop animation if all gestures are complete
+    if (currentTime >= (this.currentMotion.duration_hint || 2.0) && !anyActive) {
+      console.log('MotionEngine: Motion complete');
+      this.stop();
     }
   }
 
@@ -70,10 +85,15 @@ export class MotionEngine {
     if (!this.vrm) return;
 
     const bone = this.getBone(gesture.bone);
-    if (!bone) return;
+    if (!bone) {
+      console.warn(`MotionEngine: Bone "${gesture.bone}" not found`);
+      return;
+    }
 
     const rotation = this.calculateRotation(gesture, progress);
     const clampedRotation = this.clampRotation(rotation);
+
+    console.log(`Applying gesture to ${gesture.bone}: ${gesture.axis}=${clampedRotation.toFixed(2)} (progress: ${progress.toFixed(2)})`);
 
     switch (gesture.axis) {
       case 'x':
@@ -92,7 +112,10 @@ export class MotionEngine {
     if (!this.vrm) return null;
 
     const humanoid = this.vrm.humanoid;
-    if (!humanoid) return null;
+    if (!humanoid) {
+      console.warn('MotionEngine: VRM humanoid not found');
+      return null;
+    }
 
     // Map our bone names to VRM humanoid bones
     const boneMapping: Record<string, string> = {
@@ -108,9 +131,15 @@ export class MotionEngine {
     };
 
     const vrmBoneName = boneMapping[boneName];
-    if (!vrmBoneName) return null;
+    if (!vrmBoneName) {
+      console.warn(`MotionEngine: No mapping for bone "${boneName}"`);
+      return null;
+    }
 
     const boneNode = humanoid.humanBones[vrmBoneName as keyof typeof humanoid.humanBones];
+    if (!boneNode) {
+      console.warn(`MotionEngine: VRM bone "${vrmBoneName}" not found in humanoid.humanBones`);
+    }
     return boneNode?.node || null;
   }
 

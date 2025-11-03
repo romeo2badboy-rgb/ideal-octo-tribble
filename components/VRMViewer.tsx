@@ -72,8 +72,9 @@ export default function VRMViewer({ modelPath, onMotionRequest }: VRMViewerProps
         // Add VRM to scene
         scene.add(vrm.scene);
 
-        // Position model
+        // Position and rotate model to face camera
         vrm.scene.position.set(0, 0, 0);
+        vrm.scene.rotation.y = Math.PI; // Rotate 180 degrees to face camera
 
         // Initialize motion engine
         const motionEngine = new MotionEngine();
@@ -81,7 +82,7 @@ export default function VRMViewer({ modelPath, onMotionRequest }: VRMViewerProps
         motionEngineRef.current = motionEngine;
 
         setIsLoading(false);
-        console.log('VRM loaded successfully');
+        console.log('VRM loaded successfully', vrm);
       },
       (progress) => {
         console.log(
@@ -136,24 +137,27 @@ export default function VRMViewer({ modelPath, onMotionRequest }: VRMViewerProps
   }, [modelPath]);
 
   const playMotion = (motion: MotionDSL) => {
+    console.log('Playing motion:', motion);
     if (motionEngineRef.current) {
       motionEngineRef.current.playMotion(motion);
+    } else {
+      console.error('Motion engine not initialized');
     }
   };
 
   const resetPose = () => {
+    console.log('Resetting pose');
     if (motionEngineRef.current) {
       motionEngineRef.current.reset();
     }
   };
 
-  // Expose methods to parent
+  // Expose methods to parent - always expose regardless of onMotionRequest
   useEffect(() => {
-    if (onMotionRequest && motionEngineRef.current) {
-      (window as any).playMotion = playMotion;
-      (window as any).resetPose = resetPose;
-    }
-  }, [onMotionRequest]);
+    (window as any).playMotion = playMotion;
+    (window as any).resetPose = resetPose;
+    console.log('Motion controls exposed to window');
+  }, []);
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100vh' }}>
